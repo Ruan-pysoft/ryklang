@@ -70,6 +70,11 @@ const struct token toks1[] = {
 	make_token(TT_NUM, src1 + 3, 4, .num = 1337),
 	make_token(TT_EOF, src1 + 10, 0),
 };
+const char *const src2 = "18446744073709551615";
+const struct token toks2[] = {
+	make_token(TT_NUM, src2 + 0, 20, .num = ~0ul),
+	make_token(TT_EOF, src2 + 20, 0),
+};
 
 struct {
 	const char *src;
@@ -77,13 +82,19 @@ struct {
 } tests[] = {
 	{ .src = src0, .toks = toks0 },
 	{ .src = src1, .toks = toks1 },
+	{ .src = src2, .toks = toks2 },
 };
 
 int main(int argc, char **argv) {
 	(void) argc;
 	(void) argv;
 
-	const char *src = "   1337   ";
+	for (size_t i = 0; i < ARRAY_LEN(tests); ++i) {
+		printf("TEST %lu:\n", i);
+		puts(test_tokens(tests[i].src, tests[i].toks) ? "  PASS" : "  FAIL");
+	}
+
+	const char *src = "18446744073709551616";
 	struct lexer lex = lexer_new(src);
 
 	for (;;) {
@@ -96,11 +107,6 @@ int main(int argc, char **argv) {
 		token_repr(&sb, lex.tok);
 		printf(" - %.*s\n", (int)sb.count, sb.items);
 		sb_free(sb);
-	}
-
-	for (size_t i = 0; i < ARRAY_LEN(tests); ++i) {
-		printf("TEST %lu:\n", i);
-		puts(test_tokens(tests[i].src, tests[i].toks) ? "  PASS" : "  FAIL");
 	}
 }
 
