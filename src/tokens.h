@@ -28,6 +28,8 @@ struct token {
 };
 void token_repr(String_Builder *sb, struct token tok);
 
+#define make_token(ttype, tpos, tlen, ...) ((struct token) { .type = ttype, .pos = tpos, .len = tlen, __VA_ARGS__ })
+
 struct lexer {
 	const char *src;
 	const char *pos;

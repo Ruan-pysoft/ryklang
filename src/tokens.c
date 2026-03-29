@@ -51,21 +51,13 @@ struct lexer lexer_adv(struct lexer lex) {
 
 	if (lexer_atend(lex)) {
 		lex.has_tok = true;
-		lex.tok = (struct token) {
-			.type = TT_EOF,
-			.pos = lex.pos,
-			.len = 0,
-		};
+		lex.tok = make_token(TT_EOF, lex.pos, 0);
 		return lex;
 	} else if (lexer_test(lex, isdigit)) {
 		return read_num(lex);
 	} else {
 		lex.has_tok = true;
-		lex.tok = (struct token) {
-			.type = TT_UNKNOWN,
-			.pos = lex.pos++,
-			.len = 1,
-		};
+		lex.tok = make_token(TT_UNKNOWN, lex.pos++, 1);
 		return lex;
 	}
 
@@ -91,11 +83,6 @@ struct lexer read_num(struct lexer lex) {
 	}
 
 	lex.has_tok = true;
-	lex.tok = (struct token) {
-		.type = TT_NUM,
-		.num = num,
-		.pos = begin,
-		.len = lex.pos - begin,
-	};
+	lex.tok = make_token(TT_NUM, begin, lex.pos - begin, .num = num);
 	return lex;
 }
