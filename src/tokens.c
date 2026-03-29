@@ -19,6 +19,17 @@ void token_repr(String_Builder *sb, struct token tok) {
 	}
 }
 
+void le_push(struct lexer_errors *this, const char *pos, const char *msg) {
+	da_append(this, ((struct lexer_error) { .pos = pos, .msg = strdup(msg) }));
+}
+void le_pop(struct lexer_errors *this) {
+	if (this->count) free((void*)this->items[this->count--].msg);
+}
+void le_free(struct lexer_errors *this) {
+	while (this->count) le_pop(this);
+	da_free(*this);
+}
+
 bool lexer_atend(struct lexer lex) {
 	return *lex.pos == 0;
 }
@@ -45,8 +56,8 @@ struct lexer lexer_new(const char *src) {
 
 	return lex;
 }
-struct lexer read_num(struct lexer lex);
-struct lexer lexer_adv(struct lexer lex) {
+struct lexer read_num(struct lexer lex, struct lexer_errors *err);
+struct lexer lexer_adv(struct lexer lex, struct lexer_errors *err) {
 	lex = lexer_skip_ws(lex);
 
 	if (lexer_atend(lex)) {
@@ -54,9 +65,10 @@ struct lexer lexer_adv(struct lexer lex) {
 		lex.tok = make_token(TT_EOF, lex.pos, 0);
 		return lex;
 	} else if (lexer_test(lex, isdigit)) {
-		return read_num(lex);
+		return read_num(lex, err);
 	} else {
 		lex.has_tok = true;
+		le_push(err, lex.pos, "unexpected character");
 		lex.tok = make_token(TT_UNKNOWN, lex.pos++, 1);
 		return lex;
 	}
@@ -64,25 +76,29 @@ struct lexer lexer_adv(struct lexer lex) {
 	assert(false && "unreachable");
 }
 
-struct lexer read_num(struct lexer lex) {
+struct lexer read_num(struct lexer lex, struct lexer_errors *err) {
 	assert(lexer_test(lex, isdigit));
 
 	const char *const begin = lex.pos;
 
 	uint64_t num = 0;
+	bool hit_overflow = false;
 	while (lexer_test(lex, isdigit)) {
 		const uint64_t old = num;
 		num *= 10;
 		num += *lex.pos - '0';
 
-		if (num < old) {
-			assert(false && "TODO: proper error handling");
+		if (!hit_overflow && num < old) {
+			le_push(err, lex.pos, "integer overflow while parsing number");
 		}
 
 		lex = lexer_inc(lex);
 	}
 
 	lex.has_tok = true;
-	lex.tok = make_token(TT_NUM, begin, lex.pos - begin, .num = num);
+	lex.tok = make_token(
+		TT_NUM, begin, lex.pos - begin,
+		.num = hit_overflow ? 0 : num
+	);
 	return lex;
 }

@@ -20,10 +20,11 @@ size_t col(const char *src, const char *pos) {
 }
 
 bool test_tokens(const char *src, const struct token *tokens) {
+	struct lexer_errors err = {0};
 	struct lexer lex = lexer_new(src);
 
 	for (;;) {
-		lex = lexer_adv(lex);
+		lex = lexer_adv(lex, &err);
 		assert(lex.has_tok);
 
 		struct token token = *tokens++;
@@ -95,10 +96,11 @@ int main(int argc, char **argv) {
 	}
 
 	const char *src = "18446744073709551616";
+	struct lexer_errors err = {0};
 	struct lexer lex = lexer_new(src);
 
 	for (;;) {
-		lex = lexer_adv(lex);
+		lex = lexer_adv(lex, &err);
 		assert(lex.has_tok);
 
 		if (lex.tok.type == TT_EOF) break;
@@ -107,6 +109,13 @@ int main(int argc, char **argv) {
 		token_repr(&sb, lex.tok);
 		printf(" - %.*s\n", (int)sb.count, sb.items);
 		sb_free(sb);
+	}
+
+	if (err.count) {
+		printf("Encountered %lu errors:\n", err.count);
+		da_foreach(struct lexer_error, it, &err) {
+			printf("  @ %lu,%lu: %s\n", line(lex.src, it->pos), col(lex.src, it->pos), it->msg);
+		}
 	}
 }
 
