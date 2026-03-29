@@ -7,8 +7,8 @@
 #include "nob.h"
 
 #define LIST_OF_TTS \
-	X(TT_NUM, "%ld", (tok).num) \
-	X(TT_EOF, "%.0s", NULL) \
+	X(TT_NUM, "%lu", (tok).num) \
+	X(TT_EOF, "%.0s", "") \
 	X(TT_UNKNOWN, "%.*s", (int)(tok).len, (tok).pos)
 
 enum token_type {
@@ -21,7 +21,7 @@ const char *tt_repr(enum token_type tt);
 struct token {
 	enum token_type type;
 	union {
-		int64_t num;
+		uint64_t num;
 	};
 	const char *pos;
 	size_t len;

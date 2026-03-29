@@ -45,6 +45,7 @@ struct lexer lexer_new(const char *src) {
 
 	return lex;
 }
+struct lexer read_num(struct lexer lex);
 struct lexer lexer_adv(struct lexer lex) {
 	lex = lexer_skip_ws(lex);
 
@@ -56,6 +57,8 @@ struct lexer lexer_adv(struct lexer lex) {
 			.len = 0,
 		};
 		return lex;
+	} else if (lexer_test(lex, isdigit)) {
+		return read_num(lex);
 	} else {
 		lex.has_tok = true;
 		lex.tok = (struct token) {
@@ -67,4 +70,32 @@ struct lexer lexer_adv(struct lexer lex) {
 	}
 
 	assert(false && "unreachable");
+}
+
+struct lexer read_num(struct lexer lex) {
+	assert(lexer_test(lex, isdigit));
+
+	const char *const begin = lex.pos;
+
+	uint64_t num = 0;
+	while (lexer_test(lex, isdigit)) {
+		const uint64_t old = num;
+		num *= 10;
+		num += *lex.pos - '0';
+
+		if (num < old) {
+			assert(false && "TODO: proper error handling");
+		}
+
+		lex = lexer_inc(lex);
+	}
+
+	lex.has_tok = true;
+	lex.tok = (struct token) {
+		.type = TT_NUM,
+		.num = num,
+		.pos = begin,
+		.len = lex.pos - begin,
+	};
+	return lex;
 }
