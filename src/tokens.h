@@ -44,8 +44,8 @@ void le_free(struct lexer_errors *this);
 	String_Builder _le_pushf_sb = {0}; \
 	sb_appendf(&_le_pushf_sb, fmt, __VA_ARGS__); \
 	sb_append_null(&_le_pushf_sb); \
-	le_push((le), (pos), (len), _le_pushf_sb->items); \
-	sb_free(&_le_pushf_sb); \
+	le_push((le), (pos), (len), _le_pushf_sb.items); \
+	sb_free(_le_pushf_sb); \
 } while (0)
 
 struct lexer {
