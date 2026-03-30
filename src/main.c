@@ -1,4 +1,5 @@
 #include "tokens.h"
+#include "ast.h"
 
 bool test_tokens(const char *src, const struct token *tokens, const struct lexer_error *errors) {
 	struct source source = { .name = "<test>", .src = src };
@@ -132,11 +133,12 @@ int main(int argc, char **argv) {
 		puts(test_tokens(tests[i].src, tests[i].toks, tests[i].errs) ? "  PASS" : "  FAIL");
 	}
 
-	const char *code = "Hi there! 13";
+	const char *code = "42";
 	const char *file = "<test input>";
 	struct source source = { .name = file, .src = code };
 	struct lexer_errors err = {0};
 	struct lexer lex = lexer_new(&source);
+	const struct lexer saved = lex;
 
 	for (
 		struct token tok = lexer_next(&lex, &err);
@@ -156,6 +158,16 @@ int main(int argc, char **argv) {
 			sb_print(span_pretty, it->span, 4);
 		}
 	}
+
+	le_free(&err);
+	lex = saved;
+	struct arena arena = arena_new(0);
+	struct parser parser = parser_new(&arena, &lex, &err);
+
+	struct ast *program = parse(&parser);
+	assert(parser.err.count == 0);
+	sb_print(ast_repr, program);
+	putchar('\n');
 }
 
 #define NOB_IMPLEMENTATION
