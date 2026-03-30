@@ -22,6 +22,15 @@ struct position pos_at(const struct source *src, const char *at);
 void pos_adv(struct position *this);
 struct position pos_advanced(struct position pos);
 
+#define POS_FMT "%s:%lu:%lu"
+#define POS_ARGS(pos) (pos).src->name, (pos).line, (pos).at - (pos).line_begin
+
+struct span {
+	struct position pos;
+	size_t len;
+};
+void span_pretty(String_Builder *sb, struct span span, size_t indent);
+
 #define LIST_OF_TTS \
 	X(TT_NUM, "%lu", (tok).num) \
 	X(TT_EOF, "%.0s", "") \

@@ -28,6 +28,23 @@ struct position pos_advanced(struct position pos) {
 	return pos;
 }
 
+void span_pretty(String_Builder *sb, struct span span, size_t indent) {
+	assert(span.pos.line_begin <= span.pos.at);
+
+	for (size_t i = 0; i < indent; ++i) sb_append(sb, ' ');
+	size_t line_len = 0;
+	while (span.pos.line_begin[line_len] != '\n' && span.pos.line_begin[line_len] != '\0') {
+		++line_len;
+	}
+	sb_append_buf(sb, span.pos.line_begin, line_len);
+	sb_append(sb, '\n');
+	for (size_t i = 0; i < indent; ++i) sb_append(sb, ' ');
+	for (size_t i = 0; i < (size_t)(span.pos.at - span.pos.line_begin); ++i) sb_append(sb, ' ');
+	for (size_t i = 0; i < span.len; ++i) sb_append(sb, '^');
+	if (span.len == 0) sb_append(sb, '^');
+	sb_append(sb, '\n');
+}
+
 const char *tt_repr(enum token_type tt) {
 	switch (tt) {
 #define X(tt, ...) case tt: return #tt;
