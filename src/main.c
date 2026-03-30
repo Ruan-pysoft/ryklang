@@ -145,11 +145,11 @@ int main(int argc, char **argv) {
 	struct lexer_errors err = {0};
 	struct lexer lex = lexer_new(src);
 
-	for (;;) {
+	for (
 		struct token tok = lexer_next(&lex, &err);
-
-		if (tok.type == TT_EOF) break;
-
+		tok.type != TT_EOF;
+		tok = lexer_next(&lex, &err)
+	) {
 		String_Builder sb = {0};
 		token_repr(&sb, tok);
 		printf(" - %.*s\n", (int)sb.count, sb.items);
