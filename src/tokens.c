@@ -27,6 +27,11 @@ struct position pos_advanced(struct position pos) {
 	pos_adv(&pos);
 	return pos;
 }
+bool pos_cmp(struct position a, struct position b) {
+	const bool res = a.src == b.src && a.at == b.at;
+	if (res) assert(a.line == b.line && a.line_begin == b.line_begin);
+	return res;
+}
 
 void span_pretty(String_Builder *sb, struct span span, size_t indent) {
 	assert(span.pos.line_begin <= span.pos.at);
@@ -43,6 +48,9 @@ void span_pretty(String_Builder *sb, struct span span, size_t indent) {
 	for (size_t i = 0; i < span.len; ++i) sb_append(sb, '^');
 	if (span.len == 0) sb_append(sb, '^');
 	sb_append(sb, '\n');
+}
+bool span_cmp(struct span a, struct span b) {
+	return a.len == b.len && pos_cmp(a.pos, b.pos);
 }
 
 const char *tt_repr(enum token_type tt) {
@@ -95,7 +103,7 @@ void lexer_skip_ws(struct lexer *this) {
 
 struct lexer lexer_new(const struct source *src) {
 	struct lexer lex = {0};
-	lex.pos = pos_begin(&src);
+	lex.pos = pos_begin(src);
 
 	return lex;
 }
@@ -120,24 +128,24 @@ struct token lexer_next(struct lexer *this, struct lexer_errors *err) {
 struct token read_num(struct lexer *this, struct lexer_errors *err) {
 	assert(lexer_test(this, isdigit));
 
-	const char *const begin = this->pos;
+	const struct position begin = this->pos;
 
 	uint64_t num = 0;
 	bool hit_overflow = false;
 	while (lexer_test(this, isdigit)) {
 		const uint64_t old = num;
 		num *= 10;
-		num += *this->pos - '0';
+		num += *this->pos.at - '0';
 
 		if (!hit_overflow && num < old) {
-			le_push(err, this->pos, 1, "integer overflow while parsing number");
+			le_push(err, begin, this->pos.at - begin.at + 1, "integer overflow while parsing number");
 		}
 
 		lexer_adv(this);
 	}
 
 	return make_token(
-		TT_NUM, begin, this->pos - begin,
+		TT_NUM, begin, this->pos.at - begin.at,
 		.num = hit_overflow ? 0 : num
 	);
 }
