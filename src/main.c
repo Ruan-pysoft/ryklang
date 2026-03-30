@@ -1,27 +1,9 @@
 #include "tokens.h"
 
-size_t line(const char *src, const char *pos) {
-	size_t line = 1;
-
-	while (src < pos) {
-		if (*src++ == '\n') ++line;
-	}
-
-	return line;
-}
-size_t col(const char *src, const char *pos) {
-	size_t col = 1;
-
-	while (src < pos && *--pos != '\n') {
-		++col;
-	}
-
-	return col;
-}
-
 bool test_tokens(const char *src, const struct token *tokens, const struct lexer_error *errors) {
+	struct source source = { .name = "<test>", .src = src };
 	struct lexer_errors err = {0};
-	struct lexer lex = lexer_new(src);
+	struct lexer lex = lexer_new(&source);
 
 	for (;;) {
 		struct token lex_tok = lexer_next(&lex, &err);
@@ -141,9 +123,11 @@ int main(int argc, char **argv) {
 		puts(test_tokens(tests[i].src, tests[i].toks, tests[i].errs) ? "  PASS" : "  FAIL");
 	}
 
-	const char *src = "Hi there! 13";
+	const char *code = "Hi there! 13";
+	const char *file = "<test input>";
+	struct source source = { .name = file, .src = code };
 	struct lexer_errors err = {0};
-	struct lexer lex = lexer_new(src);
+	struct lexer lex = lexer_new(&source);
 
 	for (
 		struct token tok = lexer_next(&lex, &err);

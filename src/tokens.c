@@ -61,8 +61,11 @@ void token_repr(String_Builder *sb, struct token tok) {
 	}
 }
 
-void le_push(struct lexer_errors *this, const char *pos, const char *msg) {
-	da_append(this, ((struct lexer_error) { .pos = pos, .msg = strdup(msg) }));
+void le_push(struct lexer_errors *this, struct position pos, size_t len, const char *msg) {
+	da_append(this, ((struct lexer_error) {
+		.span = { .pos = pos, .len = len },
+		.msg = strdup(msg)
+	}));
 }
 void le_pop(struct lexer_errors *this) {
 	if (this->count) free((void*)this->items[this->count--].msg);
@@ -73,16 +76,16 @@ void le_free(struct lexer_errors *this) {
 }
 
 bool lexer_atend(const struct lexer *this) {
-	return *this->pos == 0;
+	return *this->pos.at == 0;
 }
 bool lexer_test(const struct lexer *this, int(*test)(int)) {
-	return !lexer_atend(this) && test(*this->pos);
+	return !lexer_atend(this) && test(*this->pos.at);
 }
 bool lexer_cmp(const struct lexer *this, char c) {
-	return !lexer_atend(this) && *this->pos == c;
+	return !lexer_atend(this) && *this->pos.at == c;
 }
 void lexer_adv(struct lexer *this) {
-	if (!lexer_atend(this)) ++this->pos;
+	if (!lexer_atend(this)) pos_adv(&this->pos);
 }
 void lexer_skip_ws(struct lexer *this) {
 	while (lexer_test(this, isspace)) {
@@ -90,9 +93,9 @@ void lexer_skip_ws(struct lexer *this) {
 	}
 }
 
-struct lexer lexer_new(const char *src) {
+struct lexer lexer_new(const struct source *src) {
 	struct lexer lex = {0};
-	lex.src = lex.pos = src;
+	lex.pos = pos_begin(&src);
 
 	return lex;
 }
@@ -105,7 +108,7 @@ struct token lexer_next(struct lexer *this, struct lexer_errors *err) {
 	} else if (lexer_test(this, isdigit)) {
 		return read_num(this, err);
 	} else {
-		le_push(err, this->pos, "unexpected character");
+		le_push(err, this->pos, 1, "unexpected character");
 		struct token res = make_token(TT_UNKNOWN, this->pos, 1);
 		lexer_adv(this);
 		return res;
@@ -127,7 +130,7 @@ struct token read_num(struct lexer *this, struct lexer_errors *err) {
 		num += *this->pos - '0';
 
 		if (!hit_overflow && num < old) {
-			le_push(err, this->pos, "integer overflow while parsing number");
+			le_push(err, this->pos, 1, "integer overflow while parsing number");
 		}
 
 		lexer_adv(this);
