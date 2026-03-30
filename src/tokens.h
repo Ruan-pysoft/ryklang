@@ -6,6 +6,22 @@
 #define NOB_STRIP_PREFIX
 #include "nob.h"
 
+struct source {
+	const char *name;
+	const char *src;
+};
+
+struct position {
+	const struct source *src;
+	const char *at;
+	size_t line;
+	const char *line_begin;
+};
+struct position pos_begin(const struct source *src);
+struct position pos_at(const struct source *src, const char *at);
+void pos_adv(struct position *this);
+struct position pos_advanced(struct position pos);
+
 #define LIST_OF_TTS \
 	X(TT_NUM, "%lu", (tok).num) \
 	X(TT_EOF, "%.0s", "") \

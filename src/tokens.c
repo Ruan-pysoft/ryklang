@@ -3,6 +3,31 @@
 #include <assert.h>
 #include <ctype.h>
 
+struct position pos_begin(const struct source *src) {
+	return (struct position) {
+		.src = src,
+		.at = src->src,
+		.line = 1,
+		.line_begin = src->src,
+	};
+}
+struct position pos_at(const struct source *src, const char *at) {
+	struct position res = pos_begin(src);
+	while (res.at < at) pos_adv(&res);
+	return res;
+}
+void pos_adv(struct position *this) {
+	assert(*this->at != '\0');
+	if (*this->at++ == '\n') {
+		++this->line;
+		this->line_begin = this->at;
+	}
+}
+struct position pos_advanced(struct position pos) {
+	pos_adv(&pos);
+	return pos;
+}
+
 const char *tt_repr(enum token_type tt) {
 	switch (tt) {
 #define X(tt, ...) case tt: return #tt;
