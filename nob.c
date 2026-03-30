@@ -38,7 +38,8 @@ bool process_src(Nob_Walk_Entry entry) {
 		Cmd cmd = {0};
 		cmd_append(&cmd, "gcc", "-c", CC_FLAGS, entry.path, "-o", sb.items);
 
-		return cmd_run(&cmd, .async = &procs);
+		//return cmd_run(&cmd, .async = &procs);
+		return cmd_run(&cmd);
 	}
 
 	return true;

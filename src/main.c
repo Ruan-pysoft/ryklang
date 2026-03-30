@@ -25,7 +25,7 @@ bool test_tokens(const char *src, const struct token *tokens, const struct lexer
 			return false;
 		}
 
-		if (strncmp(sb_gen.items, sb_cst.items, sb_gen.count) != 0) {
+		if (!token_cmp(token, lex_tok)) {
 			printf("  Token mismatch:\n");
 			printf("  got      token %.*s\n", (int)sb_gen.count, sb_gen.items);
 			sb_print(span_pretty, lex_tok.span, 4);

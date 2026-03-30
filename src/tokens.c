@@ -1,58 +1,5 @@
 #include "tokens.h"
 
-#include <assert.h>
-#include <ctype.h>
-
-struct position pos_begin(const struct source *src) {
-	return (struct position) {
-		.src = src,
-		.at = src->src,
-		.line = 1,
-		.line_begin = src->src,
-	};
-}
-struct position pos_at(const struct source *src, const char *at) {
-	struct position res = pos_begin(src);
-	while (res.at < at) pos_adv(&res);
-	return res;
-}
-void pos_adv(struct position *this) {
-	assert(*this->at != '\0');
-	if (*this->at++ == '\n') {
-		++this->line;
-		this->line_begin = this->at;
-	}
-}
-struct position pos_advanced(struct position pos) {
-	pos_adv(&pos);
-	return pos;
-}
-bool pos_cmp(struct position a, struct position b) {
-	const bool res = a.src == b.src && a.at == b.at;
-	if (res) assert(a.line == b.line && a.line_begin == b.line_begin);
-	return res;
-}
-
-void span_pretty(String_Builder *sb, struct span span, size_t indent) {
-	assert(span.pos.line_begin <= span.pos.at);
-
-	for (size_t i = 0; i < indent; ++i) sb_append(sb, ' ');
-	size_t line_len = 0;
-	while (span.pos.line_begin[line_len] != '\n' && span.pos.line_begin[line_len] != '\0') {
-		++line_len;
-	}
-	sb_append_buf(sb, span.pos.line_begin, line_len);
-	sb_append(sb, '\n');
-	for (size_t i = 0; i < indent; ++i) sb_append(sb, ' ');
-	for (size_t i = 0; i < (size_t)(span.pos.at - span.pos.line_begin); ++i) sb_append(sb, ' ');
-	for (size_t i = 0; i < span.len; ++i) sb_append(sb, '^');
-	if (span.len == 0) sb_append(sb, '^');
-	sb_append(sb, '\n');
-}
-bool span_cmp(struct span a, struct span b) {
-	return a.len == b.len && pos_cmp(a.pos, b.pos);
-}
-
 const char *tt_repr(enum token_type tt) {
 	switch (tt) {
 #define X(tt, ...) case tt: return #tt;
@@ -67,6 +14,17 @@ void token_repr(String_Builder *sb, struct token tok) {
 		LIST_OF_TTS
 #undef X
 	}
+}
+bool token_cmp(struct token a, struct token b) {
+	if (a.type != b.type) return false;
+
+	switch (a.type) {
+		case TT_EOF: return true;
+		case TT_NUM: return a.num == b.num;
+		case TT_UNKNOWN: return span_cmp(a.span, b.span);
+	}
+
+	assert(false && "unreachable");
 }
 
 void le_push(struct lexer_errors *this, struct position pos, size_t len, const char *msg) {
