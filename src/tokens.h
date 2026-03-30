@@ -57,4 +57,4 @@ struct lexer {
 };
 
 struct lexer lexer_new(const char *src);
-struct lexer lexer_adv(struct lexer lex, struct lexer_errors *err);
+struct token lexer_next(struct lexer *next, struct lexer_errors *err);

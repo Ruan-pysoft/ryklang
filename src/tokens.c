@@ -30,24 +30,22 @@ void le_free(struct lexer_errors *this) {
 	da_free(*this);
 }
 
-bool lexer_atend(struct lexer lex) {
-	return *lex.pos == 0;
+bool lexer_atend(const struct lexer *this) {
+	return *this->pos == 0;
 }
-bool lexer_test(struct lexer lex, int(*test)(int)) {
-	return !lexer_atend(lex) && test(*lex.pos);
+bool lexer_test(const struct lexer *this, int(*test)(int)) {
+	return !lexer_atend(this) && test(*this->pos);
 }
-bool lexer_cmp(struct lexer lex, char c) {
-	return !lexer_atend(lex) && *lex.pos == c;
+bool lexer_cmp(const struct lexer *this, char c) {
+	return !lexer_atend(this) && *this->pos == c;
 }
-struct lexer lexer_inc(struct lexer lex) {
-	if (!lexer_atend(lex)) ++lex.pos;
-	return lex;
+void lexer_adv(struct lexer *this) {
+	if (!lexer_atend(this)) ++this->pos;
 }
-struct lexer lexer_skip_ws(struct lexer lex) {
-	while (lexer_test(lex, isspace)) {
-		lex = lexer_inc(lex);
+void lexer_skip_ws(struct lexer *this) {
+	while (lexer_test(this, isspace)) {
+		lexer_adv(this);
 	}
-	return lex;
 }
 
 struct lexer lexer_new(const char *src) {
@@ -56,49 +54,45 @@ struct lexer lexer_new(const char *src) {
 
 	return lex;
 }
-struct lexer read_num(struct lexer lex, struct lexer_errors *err);
-struct lexer lexer_adv(struct lexer lex, struct lexer_errors *err) {
-	lex = lexer_skip_ws(lex);
+struct token read_num(struct lexer *this, struct lexer_errors *err);
+struct token lexer_next(struct lexer *this, struct lexer_errors *err) {
+	lexer_skip_ws(this);
 
-	if (lexer_atend(lex)) {
-		lex.has_tok = true;
-		lex.tok = make_token(TT_EOF, lex.pos, 0);
-		return lex;
-	} else if (lexer_test(lex, isdigit)) {
-		return read_num(lex, err);
+	if (lexer_atend(this)) {
+		return make_token(TT_EOF, this->pos, 0);
+	} else if (lexer_test(this, isdigit)) {
+		return read_num(this, err);
 	} else {
-		lex.has_tok = true;
-		le_push(err, lex.pos, "unexpected character");
-		lex.tok = make_token(TT_UNKNOWN, lex.pos++, 1);
-		return lex;
+		le_push(err, this->pos, "unexpected character");
+		struct token res = make_token(TT_UNKNOWN, this->pos, 1);
+		lexer_adv(this);
+		return res;
 	}
 
 	assert(false && "unreachable");
 }
 
-struct lexer read_num(struct lexer lex, struct lexer_errors *err) {
-	assert(lexer_test(lex, isdigit));
+struct token read_num(struct lexer *this, struct lexer_errors *err) {
+	assert(lexer_test(this, isdigit));
 
-	const char *const begin = lex.pos;
+	const char *const begin = this->pos;
 
 	uint64_t num = 0;
 	bool hit_overflow = false;
-	while (lexer_test(lex, isdigit)) {
+	while (lexer_test(this, isdigit)) {
 		const uint64_t old = num;
 		num *= 10;
-		num += *lex.pos - '0';
+		num += *this->pos - '0';
 
 		if (!hit_overflow && num < old) {
-			le_push(err, lex.pos, "integer overflow while parsing number");
+			le_push(err, this->pos, "integer overflow while parsing number");
 		}
 
-		lex = lexer_inc(lex);
+		lexer_adv(this);
 	}
 
-	lex.has_tok = true;
-	lex.tok = make_token(
-		TT_NUM, begin, lex.pos - begin,
+	return make_token(
+		TT_NUM, begin, this->pos - begin,
 		.num = hit_overflow ? 0 : num
 	);
-	return lex;
 }

@@ -24,32 +24,31 @@ bool test_tokens(const char *src, const struct token *tokens, const struct lexer
 	struct lexer lex = lexer_new(src);
 
 	for (;;) {
-		lex = lexer_adv(lex, &err);
-		assert(lex.has_tok);
+		struct token lex_tok = lexer_next(&lex, &err);
 
 		struct token token = *tokens++;
 
 		String_Builder sb_gen = {0};
-		token_repr(&sb_gen, lex.tok);
+		token_repr(&sb_gen, lex_tok);
 		String_Builder sb_cst = {0};
 		token_repr(&sb_cst, token);
 
-		if (lex.tok.pos != token.pos) {
+		if (lex_tok.pos != token.pos) {
 			printf("  Position mismatch:\n");
-			printf("  got      @ %lu,%lu %.*s\n", line(src, lex.tok.pos), col(src, lex.tok.pos), (int)sb_gen.count, sb_gen.items);
+			printf("  got      @ %lu,%lu %.*s\n", line(src, lex_tok.pos), col(src, lex_tok.pos), (int)sb_gen.count, sb_gen.items);
 			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_cst.count, sb_cst.items);
 			return false;
 		}
-		if (lex.tok.len != token.len) {
+		if (lex_tok.len != token.len) {
 			printf("  Length mismatch:\n");
-			printf("  got      @ %lu,%lu %.*s\n", line(src, lex.tok.pos), col(src, lex.tok.pos), (int)sb_gen.count, sb_gen.items);
+			printf("  got      @ %lu,%lu %.*s\n", line(src, lex_tok.pos), col(src, lex_tok.pos), (int)sb_gen.count, sb_gen.items);
 			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_cst.count, sb_cst.items);
 			return false;
 		}
 
 		if (strncmp(sb_gen.items, sb_cst.items, sb_gen.count) != 0) {
 			printf("  Token mismatch:\n");
-			printf("  got      @ %lu,%lu %.*s\n", line(src, lex.tok.pos), col(src, lex.tok.pos), (int)sb_gen.count, sb_gen.items);
+			printf("  got      @ %lu,%lu %.*s\n", line(src, lex_tok.pos), col(src, lex_tok.pos), (int)sb_gen.count, sb_gen.items);
 			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_cst.count, sb_cst.items);
 			return false;
 		}
@@ -57,7 +56,7 @@ bool test_tokens(const char *src, const struct token *tokens, const struct lexer
 		sb_free(sb_gen);
 		sb_free(sb_cst);
 
-		if (lex.tok.type == TT_EOF) break;
+		if (lex_tok.type == TT_EOF) break;
 	}
 
 	da_foreach(struct lexer_error, it, &err) {
@@ -147,13 +146,12 @@ int main(int argc, char **argv) {
 	struct lexer lex = lexer_new(src);
 
 	for (;;) {
-		lex = lexer_adv(lex, &err);
-		assert(lex.has_tok);
+		struct token tok = lexer_next(&lex, &err);
 
-		if (lex.tok.type == TT_EOF) break;
+		if (tok.type == TT_EOF) break;
 
 		String_Builder sb = {0};
-		token_repr(&sb, lex.tok);
+		token_repr(&sb, tok);
 		printf(" - %.*s\n", (int)sb.count, sb.items);
 		sb_free(sb);
 	}
