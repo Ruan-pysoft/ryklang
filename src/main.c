@@ -37,20 +37,20 @@ bool test_tokens(const char *src, const struct token *tokens, const struct lexer
 		if (lex.tok.pos != token.pos) {
 			printf("  Position mismatch:\n");
 			printf("  got      @ %lu,%lu %.*s\n", line(src, lex.tok.pos), col(src, lex.tok.pos), (int)sb_gen.count, sb_gen.items);
-			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_gen.count, sb_gen.items);
+			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_cst.count, sb_cst.items);
 			return false;
 		}
 		if (lex.tok.len != token.len) {
 			printf("  Length mismatch:\n");
 			printf("  got      @ %lu,%lu %.*s\n", line(src, lex.tok.pos), col(src, lex.tok.pos), (int)sb_gen.count, sb_gen.items);
-			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_gen.count, sb_gen.items);
+			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_cst.count, sb_cst.items);
 			return false;
 		}
 
 		if (strncmp(sb_gen.items, sb_cst.items, sb_gen.count) != 0) {
 			printf("  Token mismatch:\n");
 			printf("  got      @ %lu,%lu %.*s\n", line(src, lex.tok.pos), col(src, lex.tok.pos), (int)sb_gen.count, sb_gen.items);
-			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_gen.count, sb_gen.items);
+			printf("  expected @ %lu,%lu %.*s\n", line(src, token.pos), col(src, token.pos), (int)sb_cst.count, sb_cst.items);
 			return false;
 		}
 
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
 		puts(test_tokens(tests[i].src, tests[i].toks, tests[i].errs) ? "  PASS" : "  FAIL");
 	}
 
-	const char *src = "18446744073709551616";
+	const char *src = "Hi there! 13";
 	struct lexer_errors err = {0};
 	struct lexer lex = lexer_new(src);
 
