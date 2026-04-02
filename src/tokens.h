@@ -56,3 +56,11 @@ struct lexer {
 
 struct lexer lexer_new(const struct source *src);
 struct token lexer_next(struct lexer *next, struct lexer_errors *err);
+
+struct token_array {
+	struct token *items;
+	size_t count;
+	size_t capacity;
+};
+
+struct token_array lex_source(const struct source *src, struct lexer_errors *err);

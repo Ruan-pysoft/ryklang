@@ -107,3 +107,16 @@ struct token read_num(struct lexer *this, struct lexer_errors *err) {
 		.num = hit_overflow ? 0 : num
 	);
 }
+
+struct token_array lex_source(const struct source *src, struct lexer_errors *err) {
+	struct lexer lex = lexer_new(src);
+	struct token_array res = {0};
+
+	struct token tok;
+	do {
+		tok = lexer_next(&lex, err);
+		sb_append(&res, tok);
+	} while (tok.type != TT_EOF);
+
+	return res;
+}

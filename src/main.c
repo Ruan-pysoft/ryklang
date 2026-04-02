@@ -37,20 +37,15 @@ int main(int argc, char **argv) {
 	const char *file = "<test input>";
 	struct source source = { .name = file, .src = code };
 	struct lexer_errors err = {0};
-	struct lexer lex = lexer_new(&source);
-	const struct lexer saved = lex;
 
 	puts("TOKENS:");
 
-	for (
-		struct token tok = lexer_next(&lex, &err);
-		tok.type != TT_EOF;
-		tok = lexer_next(&lex, &err)
-	) {
-		String_Builder sb = {0};
-		token_repr(&sb, tok);
-		printf(" - %.*s\n", (int)sb.count, sb.items);
-		sb_free(sb);
+	struct token_array toks = lex_source(&source, &err);
+
+	da_foreach(struct token, tok, &toks) {
+		printf(" - ");
+		sb_print(token_repr, *tok);
+		putchar('\n');
 	}
 
 	if (err.count) {
@@ -62,7 +57,7 @@ int main(int argc, char **argv) {
 	}
 
 	le_free(&err);
-	lex = saved;
+	struct lexer lex = lexer_new(&source);
 	struct arena arena = arena_new(0);
 	struct parser parser = parser_new(&arena, &lex, &err);
 
