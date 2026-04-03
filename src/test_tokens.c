@@ -95,30 +95,30 @@ bool test_tokens(struct tokens_test test, String_Builder *out) {
 
 #define tmp_pos(ssrc, offset, line_offset, line_num) ((struct position) { .src = NULL, .at = (ssrc) + (offset), .line_begin = (ssrc) + (line_offset), .line = (line_num) })
 
-const char *const src0 = "42";
-const struct token toks0[] = {
+static const char *const src0 = "42";
+static const struct token toks0[] = {
 	make_token(TT_NUM, tmp_pos(src0, 0, 0, 1), 2, .num = 42),
 	make_token(TT_EOF, tmp_pos(src0, 2, 0, 1), 0),
 };
-const struct lexer_error errs0[] = {{0}};
-const char *const src1 = "   1337   ";
-const struct token toks1[] = {
+static const struct lexer_error errs0[] = {{0}};
+static const char *const src1 = "   1337   ";
+static const struct token toks1[] = {
 	make_token(TT_NUM, tmp_pos(src1, 3, 0, 1), 4, .num = 1337),
 	make_token(TT_EOF, tmp_pos(src1, 10, 0, 1), 0),
 };
-const struct lexer_error errs1[] = {{0}};
-const char *const src2 = "18446744073709551615";
-const struct token toks2[] = {
+static const struct lexer_error errs1[] = {{0}};
+static const char *const src2 = "18446744073709551615";
+static const struct token toks2[] = {
 	make_token(TT_NUM, tmp_pos(src2, 0, 0, 1), 20, .num = ~0ul),
 	make_token(TT_EOF, tmp_pos(src2, 20, 0, 1), 0),
 };
-const struct lexer_error errs2[] = {{0}};
-const char *const src3 = "18446744073709551616";
-const struct token toks3[] = {
+static const struct lexer_error errs2[] = {{0}};
+static const char *const src3 = "18446744073709551616";
+static const struct token toks3[] = {
 	make_token(TT_NUM, tmp_pos(src3, 0, 0, 1), 20, .num = 0),
 	make_token(TT_EOF, tmp_pos(src3, 20, 0, 1), 0),
 };
-const struct lexer_error errs3[] = {
+static const struct lexer_error errs3[] = {
 	{ .span = { .pos = tmp_pos(src3, 0, 0, 1), .len = 20 }, .msg = "integer overflow while parsing number" },
 	{0},
 };
