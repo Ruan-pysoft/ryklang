@@ -57,14 +57,13 @@ int main(int argc, char **argv) {
 	}
 
 	le_free(&err);
-	struct lexer lex = lexer_new(&source);
-	struct arena arena = arena_new(0);
-	struct parser parser = parser_new(&arena, &lex, &err);
 
 	puts("AST:");
 
-	struct ast *program = parse(&parser);
-	assert(parser.err.count == 0);
+	struct arena arena = arena_new(0);
+	struct parser_errors perr = {0};
+	struct ast *program = parse(&arena, toks, &perr);
+	assert(perr.count == 0);
 	sb_print(ast_repr, program);
 	putchar('\n');
 

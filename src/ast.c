@@ -37,24 +37,13 @@ void pe_free(struct parser_errors *this) {
 	da_free(*this);
 }
 
-struct parser parser_new(struct arena *arena, struct lexer *lex, struct lexer_errors *lex_err) {
-	return (struct parser) {
-		.arena = arena,
-		.lex = lex,
-		.lex_err = lex_err,
-		.err = {0},
+struct ast *parse(struct arena *arena, struct token_array toks, struct parser_errors *err) {
+	assert(toks.count != 0);
 
-		.has_last_tok = false,
-		.last_tok = {0},
-	};
-}
-struct ast *parse(struct parser *this) {
-	assert(!this->has_last_tok);
-
-	struct token tok = lexer_next(this->lex, this->lex_err);
+	struct token tok = toks.items[0];
 
 	if (tok.type == TT_NUM) {
-		struct ast *res = arena_alloc(this->arena, sizeof(*res));
+		struct ast *res = arena_alloc(arena, sizeof(*res));
 		*res = (struct ast) {
 			.type = ANT_NUM,
 			.span = tok.span,
@@ -64,10 +53,10 @@ struct ast *parse(struct parser *this) {
 
 		return res;
 	} else if (tok.type == TT_EOF) {
-		pe_push(&this->err, tok.span.pos, tok.span.len, "unexpected eof, expected a number");
+		pe_push(err, tok.span.pos, tok.span.len, "unexpected eof, expected a number");
 		return NULL;
 	} else {
-		pe_pushf(&this->err, tok.span.pos, tok.span.len, "unexpected token of type %s, expected a number", tt_repr(tok.type));
+		pe_pushf(err, tok.span.pos, tok.span.len, "unexpected token of type %s, expected a number", tt_repr(tok.type));
 		return NULL;
 	}
 }

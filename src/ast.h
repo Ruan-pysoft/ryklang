@@ -41,14 +41,4 @@ void pe_free(struct parser_errors *this);
 	sb_free(_pe_pushf_sb); \
 } while (0)
 
-struct parser {
-	struct arena *arena;
-	struct lexer *lex;
-	struct lexer_errors *lex_err;
-	struct parser_errors err;
-
-	bool has_last_tok;
-	struct token last_tok;
-};
-struct parser parser_new(struct arena *arena, struct lexer *lex, struct lexer_errors *lex_err);
-struct ast *parse(struct parser *this);
+struct ast *parse(struct arena *arena, struct token_array toks, struct parser_errors *err);
