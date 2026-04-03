@@ -3,10 +3,10 @@
 bool test_tokens(struct tokens_test test, String_Builder *out) {
 	struct source source = { .name = "<test>", .src = test.src };
 	struct lexer_errors err = {0};
-	struct lexer lex = lexer_new(&source);
+	struct token_array lex_toks = lex_source(&source, &err);
 
-	for (;;) {
-		struct token lex_tok = lexer_next(&lex, &err);
+	da_foreach(struct token, it, &lex_toks) {
+		struct token lex_tok = *it;
 
 		struct token token = *test.toks++;
 		token.span.pos.src = &source;
@@ -36,9 +36,20 @@ bool test_tokens(struct tokens_test test, String_Builder *out) {
 
 		sb_free(sb_gen);
 		sb_free(sb_cst);
-
-		if (lex_tok.type == TT_EOF) break;
 	}
+
+	if (lex_toks.items[lex_toks.count - 1].type != TT_EOF) {
+		struct token lex_tok = lex_toks.items[lex_toks.count - 1];
+
+		sb_appendf(out, "  Expected EOF at end of tokens, got different token instead:\n");
+		sb_appendf(out, "  ");
+		token_repr(out, lex_tok);
+		sb_append(out, '\n');
+		span_pretty(out, lex_tok.span, 4);
+		return false;
+	}
+
+	sb_free(lex_toks);
 
 	da_foreach(struct lexer_error, it, &err) {
 		struct lexer_error error = *test.errs++;
