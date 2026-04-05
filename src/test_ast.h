@@ -12,7 +12,7 @@ struct ast_test {
 	const struct parser_error *errs;
 };
 
-#define AST_TESTS_COUNT 1
+#define AST_TESTS_COUNT 2
 extern const struct ast_test ast_tests[AST_TESTS_COUNT];
 
 bool test_ast(struct ast_test test, String_Builder *out);
