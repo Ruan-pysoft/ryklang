@@ -2,6 +2,7 @@
 #include "ast.h"
 
 #include "test_tokens.h"
+#include "test_ast.h"
 
 void compile(String_Builder *out, const struct ast *ast) {
 	assert(ast != NULL);
@@ -21,10 +22,22 @@ int main(int argc, char **argv) {
 	(void) argc;
 	(void) argv;
 
+	puts("Running lexer tests...");
 	for (size_t i = 0; i < TOKENS_TESTS_COUNT; ++i) {
 		printf("TEST %lu:\n", i);
 		String_Builder sb = {0};
 		const bool res = test_tokens(token_tests[i], &sb);
+		if (sb.count) {
+			printf("%.*s", (int)sb.count, sb.items);
+		}
+		puts(res ? "  PASS" : "  FAIL");
+	}
+
+	puts("Running parser tests...");
+	for (size_t i = 0; i < AST_TESTS_COUNT; ++i) {
+		printf("TEST %lu:\n", i);
+		String_Builder sb = {0};
+		const bool res = test_ast(ast_tests[i], &sb);
 		if (sb.count) {
 			printf("%.*s", (int)sb.count, sb.items);
 		}

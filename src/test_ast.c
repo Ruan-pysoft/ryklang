@@ -1,7 +1,7 @@
 #include "test_ast.h"
 
 bool test_ast(struct ast_test test, String_Builder *out) {
-	struct arena arena = {0};
+	struct arena arena = arena_new(0);
 	struct ast *expected_ast = test.builder(&arena);
 
 	struct parser_errors err = {0};
@@ -13,6 +13,59 @@ bool test_ast(struct ast_test test, String_Builder *out) {
 	while (tokens.items[tokens.count].type != TT_EOF) ++tokens.count;
 	++tokens.count;
 	struct ast *generated_ast = parse(&arena, tokens, &err);
+
+	if (!ast_cmp(expected_ast, generated_ast)) {
+		sb_appendf(out, "  error: incorrect ast produced:\n");
+		sb_appendf(out, "  got:\n    ");
+		ast_repr(out, generated_ast);
+		da_append(out, '\n');
+		sb_appendf(out, "  expected:\n    ");
+		ast_repr(out, expected_ast);
+		da_append(out, '\n');
+
+		return false;
+	}
+
+	arena_free(&arena);
+
+	da_foreach(struct parser_error, it, &err) {
+		struct parser_error error = *test.errs++;
+		//error.span.pos.src = &source;
+
+		if (error.msg == NULL) {
+			sb_appendf(out, "  Unexpected error:\n");
+			sb_appendf(out, "  got      error %s\n", it->msg);
+			//span_pretty(out, it->span, 4);
+			sb_appendf(out, "  expected no error\n");
+			return false;
+		}
+
+		if (!span_cmp(error.span, it->span)) {
+			sb_appendf(out, "  Got errors at wrong position:\n");
+			sb_appendf(out, "  got      error %s\n", it->msg);
+			//span_pretty(out, it->span, 4);
+			sb_appendf(out, "  expected error %s\n", error.msg);
+			//span_pretty(out, error.span, 4);
+			return false;
+		}
+
+		if (strcmp(error.msg, it->msg) != 0) {
+			sb_appendf(out, "  Got unexpected errors message:\n");
+			sb_appendf(out, "  got      error %s\n", it->msg);
+			//span_pretty(out, it->span, 4);
+			sb_appendf(out, "  expected error %s\n", error.msg);
+			//span_pretty(out, error.span, 4);
+			return false;
+		}
+	}
+
+	if (test.errs->msg != NULL) {
+		sb_appendf(out, "  Didn't get expected errors:\n");
+		sb_appendf(out, "  got      no error\n");
+		sb_appendf(out, "  expected error %s\n", test.errs->msg);
+		//span_pretty(out, test.errs->span, 4);
+		return false;
+	}
 
 	return true;
 }

@@ -63,6 +63,8 @@ struct arena arena_new(size_t initial_size) {
 	};
 }
 void *arena_alloc(struct arena *this, size_t size) {
+	assert(this->capacity != 0);
+
 	while (this->count + size > this->capacity) {
 		this->capacity *= 2;
 		this->memory = realloc(this->memory, this->capacity);
