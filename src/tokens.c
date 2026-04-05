@@ -21,6 +21,10 @@ bool token_cmp(struct token a, struct token b) {
 	switch (a.type) {
 		case TT_EOF: return true;
 		case TT_NUM: return a.num == b.num;
+#define X(tt, ...) case tt:
+		LIST_OF_STR_TTS
+#undef X
+			return true;
 		case TT_UNKNOWN: return span_cmp(a.span, b.span);
 	}
 
@@ -50,8 +54,14 @@ bool lexer_test(const struct lexer *this, int(*test)(int)) {
 bool lexer_cmp(const struct lexer *this, char c) {
 	return !lexer_atend(this) && *this->pos.at == c;
 }
+bool lexer_cmpstr(const struct lexer *this, const char *str) {
+	return strncmp(this->pos.at, str, strlen(str)) == 0;
+}
 void lexer_adv(struct lexer *this) {
 	if (!lexer_atend(this)) pos_adv(&this->pos);
+}
+void lexer_advn(struct lexer *this, size_t n) {
+	for (size_t i = 0; i < n; ++i) lexer_adv(this);
 }
 void lexer_skip_ws(struct lexer *this) {
 	while (lexer_test(this, isspace)) {
@@ -73,7 +83,15 @@ struct token lexer_next(struct lexer *this, struct lexer_errors *err) {
 		return make_token(TT_EOF, this->pos, 0);
 	} else if (lexer_test(this, isdigit)) {
 		return read_num(this, err);
-	} else {
+	}
+#define X(tt, str) else if (lexer_cmpstr(this, str)) { \
+	struct token res = make_token(tt, this->pos, strlen(str)); \
+	lexer_advn(this, strlen(str)); \
+	return res; \
+}
+	LIST_OF_STR_TTS
+#undef X
+	else {
 		le_push(err, this->pos, 1, "unexpected character");
 		struct token res = make_token(TT_UNKNOWN, this->pos, 1);
 		lexer_adv(this);
