@@ -122,10 +122,19 @@ static const struct lexer_error errs3[] = {
 	{ .span = { .pos = tmp_pos(src3, 0, 0, 1), .len = 20 }, .msg = "integer overflow while parsing number" },
 	{0},
 };
+static const char *const src4 = "1 +2";
+static const struct token toks4[] = {
+	make_token(TT_NUM, tmp_pos(src4, 0, 0, 1), 1, .num = 1),
+	make_token(TT_PLUS, tmp_pos(src4, 2, 0, 1), 1,),
+	make_token(TT_NUM, tmp_pos(src4, 3, 0, 1), 1, .num = 2),
+	make_token(TT_EOF, tmp_pos(src4, 4, 0, 1), 0),
+};
+static const struct lexer_error errs4[] = {{0}};
 
 const struct tokens_test token_tests[TOKENS_TESTS_COUNT] = {
 	{ .src = src0, .toks = toks0, .errs = errs0 },
 	{ .src = src1, .toks = toks1, .errs = errs1 },
 	{ .src = src2, .toks = toks2, .errs = errs2 },
 	{ .src = src3, .toks = toks3, .errs = errs3 },
+	{ .src = src4, .toks = toks4, .errs = errs4 },
 };

@@ -12,7 +12,7 @@ struct tokens_test {
 	const struct lexer_error *errs;
 };
 
-#define TOKENS_TESTS_COUNT 4
+#define TOKENS_TESTS_COUNT 5
 extern const struct tokens_test token_tests[TOKENS_TESTS_COUNT];
 
 bool test_tokens(struct tokens_test test, String_Builder *out);
