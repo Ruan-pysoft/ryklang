@@ -8,7 +8,18 @@
 
 enum ast_type {
 	ANT_NUM,
+	ANT_BINOP,
 };
+
+#define LIST_OF_BINOPS \
+	X(BT_ADD, "+")
+
+enum binop_type {
+#define X(tt, ...) tt,
+	LIST_OF_BINOPS
+#undef X
+};
+const char *binop_type_repr(enum binop_type type);
 
 struct ast {
 	enum ast_type type;
@@ -16,6 +27,11 @@ struct ast {
 
 	union {
 		uint64_t num;
+		struct {
+			enum binop_type type;
+			struct ast *lhs;
+			struct ast *rhs;
+		} binop;
 	};
 };
 void ast_free(struct ast *ast);

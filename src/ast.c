@@ -1,8 +1,21 @@
 #include "ast.h"
 
+const char *binop_type_repr(enum binop_type type) {
+	switch (type) {
+#define X(tt, str) case tt: return str;
+		LIST_OF_BINOPS
+#undef X
+	}
+	assert(false && "unreachable");
+}
+
 void ast_free(struct ast *ast) {
 	switch (ast->type) {
 		case ANT_NUM: break;
+		case ANT_BINOP: {
+			ast_free(ast->binop.lhs);
+			ast_free(ast->binop.rhs);
+		} break;
 	}
 
 	free(ast);
@@ -10,6 +23,13 @@ void ast_free(struct ast *ast) {
 void ast_repr(String_Builder *sb, const struct ast *ast) {
 	switch (ast->type) {
 		case ANT_NUM: sb_appendf(sb, "%lu", ast->num); break;
+		case ANT_BINOP: {
+			sb_appendf(sb, "(");
+			ast_repr(sb, ast->binop.lhs);
+			sb_appendf(sb, ") %s (", binop_type_repr(ast->binop.type));
+			ast_repr(sb, ast->binop.rhs);
+			sb_appendf(sb, ")");
+		} break;
 	}
 }
 bool ast_cmp(const struct ast *a, const struct ast *b) {
@@ -18,6 +38,11 @@ bool ast_cmp(const struct ast *a, const struct ast *b) {
 
 	switch (a->type) {
 		case ANT_NUM: return a->num == b->num;
+		case ANT_BINOP: {
+			return a->binop.type == b->binop.type
+				&& ast_cmp(a->binop.lhs, b->binop.lhs)
+				&& ast_cmp(a->binop.rhs, b->binop.rhs);
+		} break;
 	}
 
 	assert(false && "unreachable");
@@ -37,10 +62,30 @@ void pe_free(struct parser_errors *this) {
 	da_free(*this);
 }
 
+struct ast *parse_base(struct arena *arena, struct token_array *toks, struct parser_errors *err);
+struct ast *parse_expr(struct arena *arena, struct token_array *toks, struct parser_errors *err);
+
 struct ast *parse(struct arena *arena, struct token_array toks, struct parser_errors *err) {
 	assert(toks.count != 0);
 
-	struct token tok = toks.items[0];
+	struct ast *ast = parse_expr(arena, &toks, err);
+
+	if (toks.count == 0) {
+		// TODO: error expected EOF
+	} else if (toks.items[0].type != TT_EOF) {
+		// TODO: error expected EOF
+	} else if (toks.count != 1) {
+		// TODO: error, expected no tokens after EOF
+	}
+
+	return ast;
+}
+
+struct ast *parse_base(struct arena *arena, struct token_array *toks, struct parser_errors *err) {
+	// TODO: return errorbast node rather than NULL
+	assert(toks->count != 0);
+
+	struct token tok = toks->items[0];
 
 	if (tok.type == TT_NUM) {
 		struct ast *res = arena_alloc(arena, sizeof(*res));
@@ -51,6 +96,9 @@ struct ast *parse(struct arena *arena, struct token_array toks, struct parser_er
 			.num = tok.num,
 		};
 
+		++toks->items;
+		--toks->count;
+
 		return res;
 	} else if (tok.type == TT_EOF) {
 		pe_push(err, tok.span.pos, tok.span.len, "unexpected eof, expected a number");
@@ -59,4 +107,32 @@ struct ast *parse(struct arena *arena, struct token_array toks, struct parser_er
 		pe_pushf(err, tok.span.pos, tok.span.len, "unexpected token of type %s, expected a number", tt_repr(tok.type));
 		return NULL;
 	}
+}
+struct ast *parse_expr(struct arena *arena, struct token_array *toks, struct parser_errors *err) {
+	struct ast *lhs = parse_base(arena, toks, err);
+
+	assert(toks->count != 0);
+
+	while (toks->items[0].type == TT_PLUS) {
+		++toks->items;
+		--toks->count;
+
+		struct ast *rhs = parse_base(arena, toks, err);
+
+		struct ast *binop = arena_alloc(arena, sizeof(*binop));
+		*binop = (struct ast) {
+			.type = ANT_BINOP,
+			.binop = {
+				.type = BT_ADD,
+				.lhs = lhs,
+				.rhs = rhs,
+			},
+		};
+
+		lhs = binop;
+
+		assert(toks->count != 0);
+	}
+
+	return lhs;
 }
