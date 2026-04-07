@@ -4,18 +4,52 @@
 #include "test_tokens.h"
 #include "test_ast.h"
 
+void load_literal(String_Builder *out, const char *reg, uint64_t lit) {
+	sb_appendf(out, "  mov %s, #%lu\n", reg, lit);
+}
+
+void compile_num(String_Builder *out, uint64_t num) {
+	load_literal(out, "w0", num);
+}
+
+void compile_expr(String_Builder *out, const struct ast *ast);
+void compile_binop(String_Builder *out, struct binop binop) {
+	compile_expr(out, binop.lhs);
+	sb_appendf(out, "  str w0, [sp, #-16]!\n");
+	compile_expr(out, binop.rhs);
+	sb_appendf(out, "  ldr w1, [sp], #16\n");
+
+	switch (binop.type) {
+		case BT_ADD: {
+			sb_appendf(out, "  add w0, w1, w0\n");
+		} break;
+	}
+}
+
+void compile_expr(String_Builder *out, const struct ast *ast) {
+	switch (ast->type) {
+		case ANT_NUM: {
+			compile_num(out, ast->num);
+		} break;
+		case ANT_BINOP: {
+			compile_binop(out, ast->binop);
+		} break;
+	}
+}
+
 void compile(String_Builder *out, const struct ast *ast) {
 	assert(ast != NULL);
-	assert(ast->type == ANT_NUM);
 
 	sb_appendf(out,
 		".text\n"
 		".global _start\n"
 		"_start:\n"
-		"  mov x0, #%lu\n"
+	);
+	compile_expr(out, ast);
+	sb_appendf(out,
 		"  mov w8, #93\n"
 		"  svc #0\n"
-	, ast->num);
+	);
 }
 
 int main(int argc, char **argv) {

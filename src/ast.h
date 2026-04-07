@@ -27,7 +27,7 @@ struct ast {
 
 	union {
 		uint64_t num;
-		struct {
+		struct binop {
 			enum binop_type type;
 			struct ast *lhs;
 			struct ast *rhs;
