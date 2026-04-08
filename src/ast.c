@@ -100,6 +100,22 @@ struct ast *parse_base(struct arena *arena, struct token_array *toks, struct par
 		--toks->count;
 
 		return res;
+	} else if (tok.type == TT_LPAREN) {
+		++toks->items;
+		--toks->count;
+
+		struct ast *res = parse_expr(arena, toks, err);
+
+		assert(toks->count);
+		if (toks->items[0].type == TT_RPAREN) {
+			++toks->items;
+			--toks->count;
+		} else {
+			struct token tok = toks->items[0];
+			pe_push(err, tok.span.pos, tok.span.len, "unclosed parenthesis");
+		}
+
+		return res;
 	} else if (tok.type == TT_EOF) {
 		pe_push(err, tok.span.pos, tok.span.len, "unexpected eof, expected a number");
 		return NULL;
