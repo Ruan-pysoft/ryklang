@@ -23,6 +23,9 @@ void compile_binop(String_Builder *out, struct binop binop) {
 		case BT_ADD: {
 			sb_appendf(out, "  add w0, w1, w0\n");
 		} break;
+		case BT_SUB: {
+			sb_appendf(out, "  sub w0, w1, w0\n");
+		} break;
 	}
 }
 

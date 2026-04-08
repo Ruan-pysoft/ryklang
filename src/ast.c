@@ -113,7 +113,9 @@ struct ast *parse_expr(struct arena *arena, struct token_array *toks, struct par
 
 	assert(toks->count != 0);
 
-	while (toks->items[0].type == TT_PLUS) {
+	while (toks->items[0].type == TT_PLUS || toks->items[0].type == TT_MINUS) {
+		enum token_type op = toks->items[0].type;
+
 		++toks->items;
 		--toks->count;
 
@@ -123,7 +125,7 @@ struct ast *parse_expr(struct arena *arena, struct token_array *toks, struct par
 		*binop = (struct ast) {
 			.type = ANT_BINOP,
 			.binop = {
-				.type = BT_ADD,
+				.type = op == TT_PLUS ? BT_ADD : BT_SUB,
 				.lhs = lhs,
 				.rhs = rhs,
 			},

@@ -12,7 +12,8 @@ enum ast_type {
 };
 
 #define LIST_OF_BINOPS \
-	X(BT_ADD, "+")
+	X(BT_ADD, "+") \
+	X(BT_SUB, "-")
 
 enum binop_type {
 #define X(tt, ...) tt,

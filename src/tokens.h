@@ -8,11 +8,13 @@
 #define LIST_OF_TTS \
 	X(TT_NUM, "%lu", (tok).num) \
 	X(TT_PLUS, "%.0s", "") \
+	X(TT_MINUS, "%.0s", "") \
 	X(TT_EOF, "%.0s", "") \
 	X(TT_UNKNOWN, "%.*s", (int)(tok).span.len, (tok).span.pos.at)
 
 #define LIST_OF_STR_TTS \
-	X(TT_PLUS, "+")
+	X(TT_PLUS, "+") \
+	X(TT_MINUS, "-")
 
 enum token_type {
 #define X(tt, ...) tt,
