@@ -71,18 +71,25 @@ struct ast *parse(struct arena *arena, struct token_array toks, struct parser_er
 	struct ast *ast = parse_expr(arena, &toks, err);
 
 	if (toks.count == 0) {
-		// TODO: error expected EOF
+		struct token prev_tok = toks.items[-1];
+		struct position pos = prev_tok.span.pos;
+		for (size_t i = 0; i < prev_tok.span.len; ++i) {
+			pos_adv(&pos);
+		}
+		pe_push(err, pos, 0, "expected an eof token at the end of the token array");
 	} else if (toks.items[0].type != TT_EOF) {
-		// TODO: error expected EOF
+		struct token tok = toks.items[0];
+		pe_pushf(err, tok.span.pos, tok.span.len, "unexpected token of type %s, expected EOF", tt_repr(tok.type));
 	} else if (toks.count != 1) {
-		// TODO: error, expected no tokens after EOF
+		struct token tok = toks.items[1];
+		pe_pushf(err, tok.span.pos, tok.span.len, "unexpected token of type %s after EOF; EOF should be the last token", tt_repr(tok.type));
 	}
 
 	return ast;
 }
 
 struct ast *parse_base(struct arena *arena, struct token_array *toks, struct parser_errors *err) {
-	// TODO: return errorbast node rather than NULL
+	// TODO: return error ast node rather than NULL
 	assert(toks->count != 0);
 
 	struct token tok = toks->items[0];
