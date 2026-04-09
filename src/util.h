@@ -34,6 +34,9 @@ struct span {
 	struct position pos;
 	size_t len;
 };
+struct span span_new(struct position pos, size_t len);
+struct span span_over(struct span a, struct span b);
+struct position span_end(struct span this);
 void span_pretty(String_Builder *sb, struct span span, size_t indent);
 bool span_cmp(struct span a, struct span b);
 

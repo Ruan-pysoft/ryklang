@@ -33,6 +33,23 @@ bool pos_cmp(struct position a, struct position b) {
 	return res;
 }
 
+struct span span_new(struct position pos, size_t len) {
+	return (struct span) { .pos = pos, .len = len };
+}
+struct span span_over(struct span a, struct span b) {
+	if (span_cmp(a, b)) return a;
+	assert(a.pos.at <= b.pos.at);
+	assert(a.pos.at + a.len <= b.pos.at + b.len);
+
+	return span_new(a.pos, b.pos.at + b.len - a.pos.at);
+}
+struct position span_end(struct span this) {
+	struct position res = this.pos;
+	for (size_t i = 0; i < this.len; ++i) {
+		pos_adv(&res);
+	}
+	return res;
+}
 void span_pretty(String_Builder *sb, struct span span, size_t indent) {
 	assert(span.pos.line_begin <= span.pos.at);
 

@@ -71,11 +71,7 @@ struct ast *parse(struct arena *arena, struct token_array toks, struct parser_er
 	struct ast *ast = parse_expr(arena, &toks, err);
 
 	if (toks.count == 0) {
-		struct token prev_tok = toks.items[-1];
-		struct position pos = prev_tok.span.pos;
-		for (size_t i = 0; i < prev_tok.span.len; ++i) {
-			pos_adv(&pos);
-		}
+		struct position pos = span_end(toks.items[-1].span);
 		pe_push(err, pos, 0, "expected an eof token at the end of the token array");
 	} else if (toks.items[0].type != TT_EOF) {
 		struct token tok = toks.items[0];
@@ -108,6 +104,8 @@ struct ast *parse_base(struct arena *arena, struct token_array *toks, struct par
 
 		return res;
 	} else if (tok.type == TT_LPAREN) {
+		struct span span = toks->items[0].span;
+
 		++toks->items;
 		--toks->count;
 
@@ -115,9 +113,13 @@ struct ast *parse_base(struct arena *arena, struct token_array *toks, struct par
 
 		assert(toks->count);
 		if (toks->items[0].type == TT_RPAREN) {
+			span = span_over(span, toks->items[0].span);
+
 			++toks->items;
 			--toks->count;
 		} else {
+			span = span_over(span, toks->items[-1].span);
+
 			struct token tok = toks->items[0];
 			pe_push(err, tok.span.pos, tok.span.len, "unclosed parenthesis");
 		}
@@ -133,6 +135,7 @@ struct ast *parse_base(struct arena *arena, struct token_array *toks, struct par
 }
 struct ast *parse_expr(struct arena *arena, struct token_array *toks, struct parser_errors *err) {
 	struct ast *lhs = parse_base(arena, toks, err);
+	struct span span = lhs->span;
 
 	assert(toks->count != 0);
 
@@ -143,10 +146,12 @@ struct ast *parse_expr(struct arena *arena, struct token_array *toks, struct par
 		--toks->count;
 
 		struct ast *rhs = parse_base(arena, toks, err);
+		span = span_over(span, rhs->span);
 
 		struct ast *binop = arena_alloc(arena, sizeof(*binop));
 		*binop = (struct ast) {
 			.type = ANT_BINOP,
+			.span = span,
 			.binop = {
 				.type = op == TT_PLUS ? BT_ADD : BT_SUB,
 				.lhs = lhs,
