@@ -121,8 +121,63 @@ static struct ast *builder1(struct arena *arena) {
 
 	return res;
 }
+static struct token toks2[] = {
+	make_token(TT_NUM, tmp_pos(0, 0, 1), 2, .num = 64),
+	make_token(TT_MINUS, tmp_pos(2, 0, 1), 1),
+	make_token(TT_LPAREN, tmp_pos(3, 0, 1), 1),
+	make_token(TT_NUM, tmp_pos(4, 0, 1), 2, .num = 13),
+	make_token(TT_PLUS, tmp_pos(6, 0, 1), 1),
+	make_token(TT_NUM, tmp_pos(7, 0, 1), 1, .num = 9),
+	make_token(TT_RPAREN, tmp_pos(8, 0, 1), 1),
+	make_token(TT_EOF, tmp_pos(9, 0, 1), 0),
+};
+static const struct parser_error errs2[] = {{0}};
+static struct ast *builder2(struct arena *arena) {
+	struct ast *lhs = arena_alloc(arena, sizeof(*lhs));
+	*lhs = (struct ast) {
+		.type = ANT_NUM,
+		.span = { .pos = tmp_pos(4, 0, 1), .len = 2 },
+		.num = 13,
+	};
+	struct ast *rhs = arena_alloc(arena, sizeof(*rhs));
+	*rhs = (struct ast) {
+		.type = ANT_NUM,
+		.span = { .pos = tmp_pos(7, 0, 1), .len = 1 },
+		.num = 9,
+	};
+	struct ast *res = arena_alloc(arena, sizeof(*res));
+	*res = (struct ast) {
+		.type = ANT_BINOP,
+		.span = { .pos = tmp_pos(4, 0, 1), .len = 6 },
+		.binop = {
+			.type = BT_ADD,
+			.lhs = lhs,
+			.rhs = rhs,
+		},
+	};
+	lhs = arena_alloc(arena, sizeof(*lhs));
+	*lhs = (struct ast) {
+		.type = ANT_NUM,
+		.span = { .pos = tmp_pos(0, 0, 1), .len = 2 },
+		.num = 64,
+	};
+	rhs = res;
+	res = arena_alloc(arena, sizeof(*res));
+	*res = (struct ast) {
+		.type = ANT_BINOP,
+		.span = { .pos = tmp_pos(0, 0, 1), .len = 6 },
+		.binop = {
+			.type = BT_SUB,
+			.lhs = lhs,
+			.rhs = rhs,
+		},
+	};
+
+	return res;
+}
 
 const struct ast_test ast_tests[AST_TESTS_COUNT] = {
 	{ .toks = toks0, .builder = builder0, .errs = errs0 },
 	{ .toks = toks1, .builder = builder1, .errs = errs1 },
+	{ .toks = toks2, .builder = builder2, .errs = errs2 },
 };
