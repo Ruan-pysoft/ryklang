@@ -7,6 +7,7 @@
 #include "ast.h"
 
 struct ast_test {
+	struct source src;
 	struct token *toks;
 	struct ast *(*builder)(struct arena *arena);
 	const struct parser_error *errs;
