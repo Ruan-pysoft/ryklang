@@ -205,7 +205,7 @@ static struct ast *builder2(struct arena *arena) {
 	struct ast *res = arena_alloc(arena, sizeof(*res));
 	*res = (struct ast) {
 		.type = ANT_BINOP,
-		.span = { .pos = tmp_pos(4, 0, 1), .len = 6 },
+		.span = { .pos = tmp_pos(3, 0, 1), .len = 6 },
 		.binop = {
 			.type = BT_ADD,
 			.lhs = lhs,
