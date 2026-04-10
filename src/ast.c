@@ -124,6 +124,8 @@ struct ast *parse_base(struct arena *arena, struct token_array *toks, struct par
 			pe_push(err, tok.span.pos, tok.span.len, "unclosed parenthesis");
 		}
 
+		res->span = span;
+
 		return res;
 	} else if (tok.type == TT_EOF) {
 		pe_push(err, tok.span.pos, tok.span.len, "unexpected eof, expected a number");
